@@ -1,4 +1,5 @@
 import asyncio
+import sys
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters.command import Command
@@ -15,6 +16,12 @@ dp = Dispatcher()
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     await message.answer("This bot is intended for personal purposes and is not public")
+
+
+@dp.message(Command("stop"))
+async def cmd_start(message: types.Message):
+    await message.answer("I will be back ту-ту-ту-ту *музыка из терминатора*")
+    sys.exit(1)
 
 
 @dp.message(Command("chat_id"))
