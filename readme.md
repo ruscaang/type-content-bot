@@ -1,1 +1,1 @@
-Локально создать файл .env и положить в него переменную BOT_TOKEN
+Create a .env file locally and put the BOT_TOKEN variable in it
