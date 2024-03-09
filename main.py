@@ -36,7 +36,12 @@ async def cmd_start(message: types.Message):
 
 @dp.message(Command("getme"))
 async def cmd_start(message: types.Message):
-    result = await fetch_data_by_user_id(message.from_user.id) or 'hi'
+    """
+    Get all your messages
+    :param message:
+    :return:
+    """
+    result = await fetch_data_by_user_id(message.from_user.id) or "Couldn't fetch user by id"
     await message.answer(result)
 
 
@@ -99,19 +104,44 @@ async def papers(message: types.Message):
             data[item.type] = item.extract_from(message.text)
 
     if data["url"] is not None and "курс" not in str.lower(message.text):
-        await message.react([react])
-        await bot.send_message(ARCHIVE, message.from_user.username + ": " + data["url"],
-                               message_thread_id=CHATS['articles'])
-        await log_entry(message, LABELS[3])
+        await log_articles(message, data)
 
     elif data["url"] is not None and "курс" in str.lower(message.text):
-        await message.react([react])
-        await bot.send_message(ARCHIVE, message.from_user.username + "\n" + message.text,
-                               message_thread_id=CHATS['courses'])
-        await log_entry(message, LABELS[6])
+        await log_courses(message)
+
+    elif message.reply_to_message and len(message.text.split()) == 1:
+        await change_label(message)
+
     else:
         await log_entry(message, LABELS[7])
 
+
+async def log_articles(message: types.Message, data: str) -> None:
+    await message.react([react])
+    await bot.send_message(ARCHIVE, message.from_user.username + ": " + data["url"],
+                           message_thread_id=CHATS['articles'])
+    await log_entry(message, LABELS[3])
+
+
+async def log_courses(message: types.Message) -> None:
+    await message.react([react])
+    await bot.send_message(ARCHIVE, message.from_user.username + "\n" + message.text,
+                           message_thread_id=CHATS['courses'])
+    await log_entry(message, LABELS[6])
+
+
+async def change_label(message: types.Message) -> None:
+    word = message.text.strip().lower()
+    if word in LABELS.values():
+        # Get the label name corresponding to the matched word
+        new_label = [key for key, value in LABELS.items() if value == word][0]
+        replied_message_id = message.reply_to_message.message_id
+        success = await update_message_by_id(replied_message_id, LABELS[new_label])
+
+        if success:
+            await message.answer(f"The label of the replied message has been changed to '{LABELS[new_label]}'.")
+        else:
+            await message.answer("Sorry, the label could not be changed.")
 
 '''
 @dp.message(F.chat.id == ORIGIN)  # функция чтобы увидеть что приходит в сообщении

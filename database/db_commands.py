@@ -46,22 +46,6 @@ async def create_or_update_user(tg_user_id, username=None, first_name=None, last
             await session.commit()
 
 
-async def insert_message1(tg_user_id, tg_message_id, text_data, json_data, label):
-    async with async_session_factory() as session:
-        statement = select(User).where(User.tg_user_id == tg_user_id)
-        result = await session.execute(statement)
-        user = result.scalar_one()
-        existing_label = await check_label(session, label)
-
-        new_message = Message(user_id=user.id,
-                              tg_message_id=tg_message_id,
-                              text_data=MessageTextData(text_data=text_data),
-                              json_data=MessageJSONData(json_data=json_data),
-                              label_id=existing_label.id)
-        session.add(new_message)
-        await session.commit()
-
-
 async def insert_message(tg_user_id, tg_message_id, text_data, json_data, label):
     async with async_session_factory() as session:
         statement = select(User).where(User.tg_user_id == tg_user_id)
