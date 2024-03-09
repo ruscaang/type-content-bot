@@ -6,13 +6,13 @@ from aiogram.filters.command import Command
 from config_reader import config
 from aiogram import F
 from aiogram.types import InputFile
-from utils import get_json, get_yaml, check_db_exists, log_entry
+from utils import get_json, get_yaml, check_db_exists, log_entry, get_emoji
 from database.db_commands import fetch_data_by_user_id, update_message_by_id
 
 
 check_db_exists('database/content_bot.db')
 
-CHATS = get_json('chat_ids.json')
+CHATS = get_json('chat_ids_test.json')
 ORIGIN = CHATS['origin']
 ARCHIVE = CHATS['archive']
 LABELS = get_yaml('labels.yaml')
@@ -20,7 +20,6 @@ LABELS = get_yaml('labels.yaml')
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=config.BOT_TOKEN.get_secret_value())
 dp = Dispatcher()
-react = types.ReactionTypeEmoji(emoji="✍")
 
 
 @dp.message(Command("start"))
@@ -54,13 +53,15 @@ async def cmd_chatid(message: types.Message):
 
 @dp.message((F.chat.id == ORIGIN) & (F.document))
 async def files(message: types.Message):
+    print('imma emoji')
     ext_count = 0
     ext_list = ["gif", "mp3", "mp4", "png", "jpg", "jpeg", "txt", "json"]
+
+    await message.react([await get_emoji('files')])
     for ext in ext_list:
         if ext in message.document.file_name:
             ext_count += 1
     if ext_count == 0:
-        await message.react([react])
         await bot.send_message(ARCHIVE, message.from_user.username, message_thread_id=CHATS['files'])
         await bot.send_document(ARCHIVE, document=message.document.file_id, message_thread_id=CHATS['files'])
         await log_entry(message, LABELS[5])
@@ -70,7 +71,7 @@ async def files(message: types.Message):
 
 @dp.message((F.chat.id == ORIGIN) & (F.forward_origin.chat.id.in_(CHATS["meme_chats"])))
 async def memes(message: types.Message):
-    await message.react([react])
+    await message.react([await get_emoji('memes')])
     await bot.forward_message(ARCHIVE, message.chat.id, message.message_id, message_thread_id=CHATS['memes'])
     await log_entry(message, LABELS[4])
 
@@ -88,7 +89,7 @@ async def vacancies(message: types.Message):
             words_found_count += 1
         
     if words_found_count >= 3:
-        await message.react([react])
+        await message.react([await get_emoji('vacancies')])
         await bot.forward_message(ARCHIVE, message.chat.id, message.message_id, message_thread_id=CHATS['vacancies'])
         await log_entry(message, LABELS[2])
 
@@ -117,14 +118,14 @@ async def papers(message: types.Message):
 
 
 async def log_articles(message: types.Message, data: str) -> None:
-    await message.react([react])
+    await message.react([await get_emoji('articles')])
     await bot.send_message(ARCHIVE, message.from_user.username + ": " + data["url"],
                            message_thread_id=CHATS['articles'])
     await log_entry(message, LABELS[3])
 
 
 async def log_courses(message: types.Message) -> None:
-    await message.react([react])
+    await message.react([await get_emoji('courses')])
     await bot.send_message(ARCHIVE, message.from_user.username + "\n" + message.text,
                            message_thread_id=CHATS['courses'])
     await log_entry(message, LABELS[6])
@@ -139,7 +140,8 @@ async def change_label(message: types.Message) -> None:
         success = await update_message_by_id(replied_message_id, LABELS[new_label])
 
         if success:
-            await message.answer(f"The label of the replied message has been changed to '{LABELS[new_label]}'.")
+            await message.react([await get_emoji('correction')])
+            # await message.answer(f"The label of the replied message has been changed to '{LABELS[new_label]}'.")
         else:
             await message.answer("Sorry, the label could not be changed.")
 
