@@ -12,7 +12,7 @@ from database.db_commands import fetch_data_by_user_id, update_message_by_id
 
 check_db_exists('database/content_bot.db')
 
-CHATS = get_json('chat_ids_test.json')
+CHATS = get_json('chat_ids.json')
 ORIGIN = CHATS['origin']
 ARCHIVE = CHATS['archive']
 LABELS = get_yaml('labels.yaml')

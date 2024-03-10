@@ -80,4 +80,4 @@ async def get_emoji(emoji):
     return types.ReactionTypeEmoji(emoji=EMOJI[emoji])
 
 
-EMOJI = get_yaml('emojis.yaml')
+EMOJI = get_json('emojis.json')
