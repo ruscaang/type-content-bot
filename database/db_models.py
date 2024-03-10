@@ -1,17 +1,34 @@
-
+import asyncpg
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from sqlalchemy.orm import relationship, declarative_base, sessionmaker
+from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-#  import asyncpg
-# "postgresql+asyncpg://USERNAME:PASSWORD@localhost/content_bot_db"
-DATABASE_URL = "sqlite+aiosqlite:///database/content_bot.db"
+
+# TODO: Move it to .env or somewhere
+DEFAULT_DB_NAME = 'postgres'
+DB_USER = 'postgres'
+DB_PASSWORD = 'postgres'
+DB_HOST = 'localhost'
+DB_PORT = '5432'
+DB_NAME = 'content_bot_db'
+
+#  DATABASE_URL = "sqlite+aiosqlite:///database/content_bot.db"
+DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 Base = declarative_base()
-
 async_engine = create_async_engine(DATABASE_URL, echo=True, future=True)
-async_session_factory = sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
+async_session_factory = async_sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
+
+
+async def get_connect(db_name: str = DB_NAME):
+    """
+    Connects to db and returns connection
+
+    :param db_name: name of a database to connect to
+    :return:
+    """
+    return await asyncpg.connect(user=DB_USER, password=DB_PASSWORD, database=db_name, host=DB_HOST, port=DB_PORT)
 
 
 class User(Base):
@@ -51,19 +68,37 @@ class Message(Base):
 
 async def create_database() -> None:
     """
-    Necessary for solid dbs like pg
+    Create db if it doesn't exist
 
     :return: None
     """
-    engine = create_async_engine(DATABASE_URL, echo=True, future=True)
-    async with engine.connect() as conn:
-        await conn.execute("CREATE DATABASE content_bot_db")
+    conn = await get_connect(db_name=DEFAULT_DB_NAME)    # Check if the target database exists
+    db_exists = await conn.fetchval("SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname=$1)", DB_NAME)
+    if not db_exists:
+        await conn.close()
+        # connection to default db to create a new db
+        conn = await get_connect(db_name=DEFAULT_DB_NAME)
+        await conn.execute(f'CREATE DATABASE {DB_NAME}')
+        print(f"Database '{DB_NAME}' created.")
+    else:
+        print(f"Database '{DB_NAME}' already exists.")
+    await conn.close()
 
 
-async def create_tables(engine):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+async def create_tables() -> None:
+    """
+    Create tables in the db if they don`t exist
 
+    :return: None
+    """
+    try:
+        async with async_engine.begin() as conn:
+            # Create tables
+            #  await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
+        print("Tables created successfully")
+    except asyncpg.exceptions.PostgresError as e:
+        print(f"Error creating tables: {e}")
 
 
 # if __name__ == "__main__":
