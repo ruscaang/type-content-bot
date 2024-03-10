@@ -40,22 +40,24 @@ class Message(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     tg_message_id = Column(Integer, unique=True)
-    label_id = Column(Integer, ForeignKey('labels.id'))
+    label = Column(String)
+    #label_id = Column(Integer, ForeignKey('labels.id'))
     timestamp = Column(DateTime, default=datetime.now)
+
 
     user = relationship("User", back_populates="messages")
     text_data = relationship("MessageTextData", back_populates="message")
     json_data = relationship("MessageJSONData", back_populates="message")
-    label = relationship("Label", back_populates="messages")
+    #label = relationship("Label", back_populates="messages")
 
-
+'''
 class Label(Base):
     __tablename__ = 'labels'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True)
 
     messages = relationship("Message", back_populates="label")
-
+'''
 
 class MessageTextData(Base):
     __tablename__ = 'message_text_data'
