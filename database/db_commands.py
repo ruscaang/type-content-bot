@@ -1,4 +1,4 @@
-from database.db_models import User, UserInfo, Message, MessageTextData, MessageJSONData, Label, \
+from database.db_models import User, UserInfo, Message, MessageTextData, MessageJSONData, \
                                async_session_factory
 from sqlalchemy.orm import joinedload
 from sqlalchemy.future import select
@@ -52,35 +52,19 @@ async def insert_message(tg_user_id, tg_message_id, text_data, json_data, label)
         result = await session.execute(statement)
         user = result.scalar_one()
 
-        existing_label = await check_label(session, label)
-
         new_message = Message(user_id=user.id,
                               tg_message_id=tg_message_id,
                               text_data=[MessageTextData(text_data=text_data)],
                               json_data=[MessageJSONData(json_data=json_data)],
-                              label=existing_label)
+                              label=label)
         session.add(new_message)
         await session.commit()
 
 
-async def check_label(session, label_name):
-    # Fetch the existing label with the given name
-    result = await session.execute(select(Label).filter(Label.name == label_name))
-    existing_label = result.scalar_one_or_none()
-
-    # If the label doesn't exist, create a new one
-    if not existing_label:
-        existing_label = Label(name=label_name)
-        session.add(existing_label)
-        await session.flush()  # Ensure the label gets an ID
-
-    return existing_label
-
-
-async def update_message_by_id(tg_message_id, new_label_str):
+async def update_message_by_id(tg_message_id, new_label):
     async with async_session_factory() as session:
         # Try to find the message by its Telegram message ID
-        statement = select(Message).where(Message.tg_message_id == tg_message_id).options(joinedload(Message.label))
+        statement = select(Message).where(Message.tg_message_id == tg_message_id)
         result = await session.execute(statement)
         message = result.scalar_one_or_none()
 
@@ -88,9 +72,7 @@ async def update_message_by_id(tg_message_id, new_label_str):
             print("Message not found")
             return False
 
-        label = await check_label(session, new_label_str)
-        # Associate the message with the new (or found) label
-        message.label = label
+        message.label = new_label
         await session.commit()
         return True
 
@@ -102,7 +84,6 @@ async def fetch_data_by_user_id(tg_user_id):
             .where(User.tg_user_id == tg_user_id)
             .options(
                 joinedload(User.info),
-                joinedload(User.messages).joinedload(Message.label),
                 joinedload(User.messages).joinedload(Message.text_data)
             )
         )
@@ -118,7 +99,7 @@ async def fetch_data_by_user_id(tg_user_id):
 
         messages_info = []
         for message in user.messages:
-            label_name = message.label.name if message.label else "No Label"
+            label_name = message.label if message.label else "No Label"
             message_text = message.text_data[0].text_data if message.text_data else "No Text"
             message_info = f"Message ID: {message.tg_message_id}\nLabel: {label_name}\nText: {message_text}\n"
             messages_info.append(message_info)
