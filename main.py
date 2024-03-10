@@ -7,6 +7,10 @@ from config_reader import config
 from aiogram import F
 from aiogram.types import InputFile
 
+from utils import log_entry, check_db_exists
+from database.db_commands import fetch_data_by_user_id, update_message_by_id
+
+check_db_exists()
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=config.BOT_TOKEN.get_secret_value())
