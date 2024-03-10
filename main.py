@@ -29,7 +29,7 @@ async def cmd_start(message: types.Message):
 @dp.message(Command("stop"))
 async def cmd_start(message: types.Message):
     await message.answer("I will be back ту-ту-ту-ту *музыка из терминатора*")
-    raise SystemExit("stop")
+    sys.exit(0)
 
 
 @dp.message(Command("chat_id"))
@@ -102,6 +102,6 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except SystemExit:
+    except KeyboardInterrupt:
         print("Shut down")
         sys.exit(0)
