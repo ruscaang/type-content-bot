@@ -65,15 +65,7 @@ async def create_tables(engine):
         await conn.run_sync(Base.metadata.create_all)
 
 
-async def create_database() -> None:
-    """
-    Necessary for solid dbs like pg
 
-    :return: None
-    """
-    engine = create_async_engine(DATABASE_URL, echo=True, future=True)
-    async with engine.connect() as conn:
-        await conn.execute("CREATE DATABASE content_bot_db")
 # if __name__ == "__main__":
     # import asyncio
     # asyncio.run(create_database())

@@ -38,7 +38,7 @@ async def cmd_get_my_messages(message: types.Message):
     :param message:
     :return:
     """
-    result = await fetch_data_by_user_id(message.from_user.id) or "Couldn't fetch user by id"
+    result = await fetch_data_by_user_id(message.from_user.id)
     await message.answer(result)
 
 
