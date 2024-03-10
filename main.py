@@ -88,9 +88,14 @@ async def papers(message: types.Message):
     if data["url"] is not None and "курс" not in str.lower(message.text):
         await message.react([react])
         await bot.send_message(-1002027282215, message.from_user.username + ": " + data["url"], message_thread_id=3)
+        await log_entry(message, 'articles')
+
     elif data["url"] is not None and "курс" in str.lower(message.text):
         await message.react([react])
         await bot.send_message(-1002027282215, message.from_user.username + "\n" + message.text, message_thread_id=46)
+        await log_entry(message, 'courses')
+    else:
+        await log_entry(message, 'trash')
 
 
 async def main():
