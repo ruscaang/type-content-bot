@@ -27,7 +27,7 @@ async def cmd_start(message: types.Message):
 
 
 @dp.message(Command("stop"))
-async def cmd_start(message: types.Message):
+async def cmd_stop(message: types.Message):
     await message.answer("I will be back ту-ту-ту-ту *музыка из терминатора*")
     sys.exit(0)
 
