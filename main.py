@@ -81,7 +81,7 @@ memes, files, vacancies, papers, courses, other
     """)
 
 
-# @dp.message(F.chat.id == -1001675679569) # function to see what is coming in the message
+# @dp.message(F.chat.id == ORIGIN) # function to see what is coming in the message
 # async def books(message: types.Message):
 #     print(message.model_dump_json())
 
