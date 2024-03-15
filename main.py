@@ -19,6 +19,7 @@ react_memes = types.ReactionTypeEmoji(emoji="🤡")
 react_files = types.ReactionTypeEmoji(emoji="🍓")
 react_papers = types.ReactionTypeEmoji(emoji="🏆")
 react_courses = types.ReactionTypeEmoji(emoji="⚡")
+react_label = types.ReactionTypeEmoji(emoji="✍")
 
 ORIGIN = int(config.ORIGIN.get_secret_value())
 ARCHIVE = int(config.ARCHIVE.get_secret_value())
@@ -56,7 +57,31 @@ async def cmd_chatid(message: types.Message):
     await message.answer(str(message.chat.id) + "_" + str(message.message_thread_id))
 
 
-# @dp.message(F.chat.id == -1001675679569) # функция чтобы увидеть что приходит в сообщении
+@dp.message(Command("label"))
+async def change_label(message: types.Message):
+    labels = ["memes", "vacancies", "files", "courses", "papers", "other"]
+    if len(message.text.split(' ')) > 1:
+        label = message.text.split(' ')[1]
+        if message.reply_to_message is not None and label in labels:
+            await update_message_by_id(message.reply_to_message.message_id, label)
+            await message.react([react_label])
+        else:
+            await bot.send_message(ORIGIN, "Нет такого лейбла или нет реплая на сообщение")
+    else:
+        await bot.send_message(ORIGIN, "Не передан новый лейбл")
+
+
+@dp.message(Command("label_info"))
+async def change_label_info(message: types.Message):
+    await bot.send_message(ORIGIN, """
+    С помощью команды label можно сменить размеченный лейбл у сообщения. 
+Для этого отправьте команду и новый лейбл через пробел.
+В данный момент можно указать для сообщения следующие лейблы:
+memes, files, vacancies, papers, courses, other
+    """)
+
+
+# @dp.message(F.chat.id == -1001675679569) # function to see what is coming in the message
 # async def books(message: types.Message):
 #     print(message.model_dump_json())
 
@@ -99,8 +124,6 @@ async def vacansies(message: types.Message):
     if words_found_count >= 3:
         await message.react([react_vacancies])
         await bot.forward_message(ARCHIVE, message.chat.id, message.message_id, message_thread_id=VACANCIES)
-        #  print(message.model_dump(exclude_unset=False))
-        #  print(message.model_dump_json(exclude_unset=False))
         await log_entry(message, 'vacancies')
 
 
