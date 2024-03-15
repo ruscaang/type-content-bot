@@ -3,15 +3,15 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from config_reader import config
 
 
-# TODO: Move it to .env or somewhere
-DEFAULT_DB_NAME = 'postgres'
-DB_USER = 'postgres'
-DB_PASSWORD = 'postgres'
-DB_HOST = 'localhost'
-DB_PORT = '5432'
-DB_NAME = 'content_bot_db'
+DEFAULT_DB_NAME = config.DEFAULT_DB_NAME.get_secret_value()
+DB_USER = config.DB_USER.get_secret_value()
+DB_PASSWORD = config.DB_PASSWORD.get_secret_value()
+DB_HOST = config.DB_HOST.get_secret_value()
+DB_PORT = config.DB_PORT.get_secret_value()
+DB_NAME = config.DB_NAME.get_secret_value()
 
 #  DATABASE_URL = "sqlite+aiosqlite:///database/content_bot.db"
 DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
@@ -61,6 +61,7 @@ class Message(Base):
     label = Column(String)
     text_data = Column(Text)
     json_data = Column(Text)
+    get_error = Column(Integer)
     timestamp = Column(DateTime, default=datetime.now)
 
     user = relationship("User", back_populates="messages")

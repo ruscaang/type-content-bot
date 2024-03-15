@@ -45,13 +45,16 @@ async def prepare_message(message: types.Message) -> Dict:
     :param message: Message type
     :return: dict of tg_user
     """
+    get_error = 0
     try:
         j_data = message.model_dump_json()
     except Exception as e:  # PydanticSerializationError
         print("Couldn't log json", str(e))
-        j_data = "Couldn't serialize"
+        j_data = str(message.model_dump())
+        get_error = 1
 
     message_dict = {'message_id': message.message_id or '',
                     'text_data': message.text or '',
-                    'json_data':  j_data}
+                    'json_data':  j_data,
+                    'get_error': get_error}
     return message_dict

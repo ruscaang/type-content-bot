@@ -40,7 +40,10 @@ async def create_or_update_user(tg_user_id: int, username=None, first_name=None,
             await session.commit()
 
 
-async def insert_message(tg_user_id: int, tg_message_id: int, text_data: str, json_data: Any, label: str) -> None:
+async def insert_message(
+    tg_user_id: int, tg_message_id: int, text_data: str,
+    json_data: Any, get_error: int, label: str
+    ) -> None:
     """
     Inserts message to Message table associating it with a user by id
 
@@ -48,6 +51,7 @@ async def insert_message(tg_user_id: int, tg_message_id: int, text_data: str, js
     :param tg_message_id: TG message id
     :param text_data: text message
     :param json_data: dumped json data
+    :param json_data: if get error for dump_json function
     :param label: message label (vacancies, articles, courses, memes, files)
     :return: None
     """
@@ -60,6 +64,7 @@ async def insert_message(tg_user_id: int, tg_message_id: int, text_data: str, js
                               tg_message_id=tg_message_id,
                               text_data=text_data,
                               json_data=json_data,
+                              get_error=get_error,
                               label=label)
         session.add(new_message)
         await session.commit()
@@ -75,7 +80,7 @@ async def log_message(tg_user: Dict, tg_message: Dict, label: str):
     """
     await create_or_update_user(tg_user['user_id'], tg_user['username'], tg_user['first_name'], tg_user['last_name'])
     await insert_message(tg_user['user_id'], tg_message['message_id'], tg_message['text_data'], tg_message['json_data'],
-                         label)
+                         tg_message['get_error'], label)
 
 
 async def update_message_by_id(tg_message_id: int, new_label: str) -> bool:
