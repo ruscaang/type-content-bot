@@ -6,6 +6,9 @@ from aiogram.filters.command import Command
 from config_reader import config
 from aiogram import F
 
+from utils import log_entry, check_db_exists
+from database.db_commands import fetch_data_by_user_id, update_message_by_id
+
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=config.BOT_TOKEN.get_secret_value())
@@ -37,6 +40,17 @@ async def cmd_stop(message: types.Message):
     sys.exit(0)
 
 
+@dp.message(Command("getme"))
+async def cmd_get_my_messages(message: types.Message):
+    """
+    Get all your messages
+    :param message:
+    :return:
+    """
+    result = await fetch_data_by_user_id(message.from_user.id)
+    await message.answer(result)
+
+
 @dp.message(Command("chat_id"))
 async def cmd_chatid(message: types.Message):
     await message.answer(str(message.chat.id) + "_" + str(message.message_thread_id))
@@ -59,19 +73,23 @@ async def files(message: types.Message):
         await message.react([react_files])
         await bot.send_message(ARCHIVE, message.from_user.username, message_thread_id=FILES)
         await bot.send_document(ARCHIVE, document=message.document.file_id, message_thread_id=FILES)
+        await log_entry(message, 'files')
 
 
 # forwards memes from the specified groups
-@dp.message((F.chat.id == ORIGIN) & (F.forward_origin.chat.id.in_({-1001595506698, -1001081170974, -1001009232144, -1001399874898})))
+@dp.message((F.chat.id == ORIGIN) & (F.forward_origin.chat.id.in_({-1001595506698, -1001081170974,
+                                                                   -1001009232144, -1001399874898})))
 async def memes(message: types.Message):
     await message.react([react_memes])
     await bot.forward_message(ARCHIVE, message.chat.id, message.message_id, message_thread_id=MEMES)
+    await log_entry(message, 'memes')
 
 
 # forwards vacancies with at least 3 keywords
 @dp.message((F.chat.id == ORIGIN) & (F.forward_origin))
 async def vacansies(message: types.Message):
-    words_list = ["ищем", "вакансия", "junior", "middle", "senior", "компания", "зарплата", "задач", "python", "sql", "data", "аналитик", "ab", "a/b", "ml", "инженер"]
+    words_list = ["ищем", "вакансия", "junior", "middle", "senior", "компания", "зарплата", "задач", "python", 
+                  "sql", "data", "аналитик", "ab", "a/b", "ml", "инженер"]
     words_found_count = 0
     
     for word in words_list:
@@ -81,6 +99,9 @@ async def vacansies(message: types.Message):
     if words_found_count >= 3:
         await message.react([react_vacancies])
         await bot.forward_message(ARCHIVE, message.chat.id, message.message_id, message_thread_id=VACANCIES)
+        #  print(message.model_dump(exclude_unset=False))
+        #  print(message.model_dump_json(exclude_unset=False))
+        await log_entry(message, 'vacancies')
 
 
 # forwards articles and courses
@@ -96,12 +117,17 @@ async def papers(message: types.Message):
     if data["url"] is not None and "курс" not in str.lower(message.text):
         await message.react([react_papers])
         await bot.send_message(ARCHIVE, message.from_user.username + ": " + data["url"], message_thread_id=PAPERS)
+        await log_entry(message, 'papers')
     elif data["url"] is not None and "курс" in str.lower(message.text):
         await message.react([react_courses])
         await bot.send_message(ARCHIVE, message.from_user.username + "\n" + message.text, message_thread_id=COURSES)
-
+        await log_entry(message, 'courses')
+    else:
+        await log_entry(message, 'other')
+       
 
 async def main():
+    await asyncio.gather(check_db_exists())
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
