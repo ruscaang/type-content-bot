@@ -123,7 +123,7 @@ async def papers(message: types.Message):
         await bot.send_message(ARCHIVE, message.from_user.username + "\n" + message.text, message_thread_id=COURSES)
         await log_entry(message, 'courses')
     else:
-        await log_entry(message, 'trash')
+        await log_entry(message, 'other')
        
 
 async def main():
