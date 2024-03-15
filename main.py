@@ -116,8 +116,8 @@ async def papers(message: types.Message):
             data[item.type] = item.extract_from(message.text)
     if data["url"] is not None and "курс" not in str.lower(message.text):
         await message.react([react_papers])
-        await log_entry(message, 'papers')
         await bot.send_message(ARCHIVE, message.from_user.username + ": " + data["url"], message_thread_id=PAPERS)
+        await log_entry(message, 'papers')
     elif data["url"] is not None and "курс" in str.lower(message.text):
         await message.react([react_courses])
         await bot.send_message(ARCHIVE, message.from_user.username + "\n" + message.text, message_thread_id=COURSES)
