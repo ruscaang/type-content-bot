@@ -74,6 +74,7 @@ async def change_label(message: types.Message):
             await bot.forward_message(ARCHIVE, message.chat.id, message.reply_to_message.message_id,
                                       message_thread_id=SUB_CHATS[label])
             await message.react([REACTIONS['label']])
+            await message.reply_to_message.react([REACTIONS[label]])
         else:
             await bot.send_message(ORIGIN, "Нет такого лейбла")
     else:
