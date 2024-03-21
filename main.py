@@ -87,8 +87,8 @@ async def change_label_info(message: types.Message):
     С помощью команды label можно сменить размеченный лейбл у сообщения. 
 Для этого отправьте команду и новый лейбл через пробел.
 В данный момент можно указать для сообщения следующие лейблы:
-memes, files, vacancies, papers, courses, other
-    """)
+🤡memes, 🍓files, 🕊vacancies, 🏆papers, ⚡courses, other
+""")
 
 
 # @dp.message(F.chat.id == ORIGIN) # function to see what is coming in the message
