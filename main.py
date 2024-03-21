@@ -104,17 +104,18 @@ async def files(message: types.Message):
         if ext in message.document.file_name:
             ext_count += 1
     if ext_count == 0:
-
-        await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS['files'],
-                              db_label='files', reaction=REACTIONS['files'])
+        label_name = 'files'
+        await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS[label_name],
+                              db_label=label_name, reaction=REACTIONS[label_name])
 
 
 # forwards memes from the specified groups
 @dp.message((F.chat.id == ORIGIN) & (F.forward_origin.chat.id.in_({-1001595506698, -1001081170974,
                                                                    -1001009232144, -1001399874898})))
 async def memes(message: types.Message):
-    await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS['memes'],
-                          db_label='memes', reaction=REACTIONS['memes'])
+    label_name = 'memes'
+    await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS[label_name],
+                          db_label=label_name, reaction=REACTIONS[label_name])
 
 
 # forwards vacancies with at least 3 keywords
@@ -129,8 +130,9 @@ async def vacancies(message: types.Message):
             words_found_count += 1
         
     if words_found_count >= 3:
-        await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS['vacancies'],
-                              db_label='vacancies', reaction=REACTIONS['vacancies'])
+        label_name = 'vacancies'
+        await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS[label_name],
+                              db_label=label_name, reaction=REACTIONS[label_name])
 
 
 # forwards articles and courses
@@ -144,13 +146,14 @@ async def papers(message: types.Message):
         if item.type in data.keys():
             data[item.type] = item.extract_from(message.text)
     if data["url"] is not None and "курс" not in str.lower(message.text):
-
-        await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS['papers'],
-                              db_label='papers', reaction=REACTIONS['papers'])
+        label_name = 'papers'
+        await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS[label_name],
+                              db_label=label_name, reaction=REACTIONS[label_name])
 
     elif data["url"] is not None and "курс" in str.lower(message.text):
-        await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS['courses'],
-                              db_label='courses', reaction=REACTIONS['courses'])
+        label_name = 'courses'
+        await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS[label_name],
+                              db_label=label_name, reaction=REACTIONS[label_name])
 
     else:
         await log_entry(message, 'other')
