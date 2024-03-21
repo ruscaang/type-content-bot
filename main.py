@@ -14,15 +14,14 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=config.BOT_TOKEN.get_secret_value())
 dp = Dispatcher()
 
-react_vacancies = types.ReactionTypeEmoji(emoji="🕊")
-react_memes = types.ReactionTypeEmoji(emoji="🤡")
-react_files = types.ReactionTypeEmoji(emoji="🍓")
-react_papers = types.ReactionTypeEmoji(emoji="🏆")
-react_courses = types.ReactionTypeEmoji(emoji="⚡")
-react_label = types.ReactionTypeEmoji(emoji="✍")
-
-ORIGIN = int(config.ORIGIN.get_secret_value())
-ARCHIVE = int(config.ARCHIVE.get_secret_value())
+REACTIONS = {
+    'vacancies': types.ReactionTypeEmoji(emoji="🕊"),
+    "memes": types.ReactionTypeEmoji(emoji="🤡"),
+    "files": types.ReactionTypeEmoji(emoji="🍓"),
+    "papers": types.ReactionTypeEmoji(emoji="🏆"),
+    "courses": types.ReactionTypeEmoji(emoji="⚡"),
+    "label": types.ReactionTypeEmoji(emoji="✍"),
+}
 
 SUB_CHATS = {
     'vacancies': int(config.VACANCIES.get_secret_value()),
@@ -31,6 +30,9 @@ SUB_CHATS = {
     'papers': int(config.PAPERS.get_secret_value()),
     'courses': int(config.COURSES.get_secret_value())
     }
+
+ORIGIN = int(config.ORIGIN.get_secret_value())
+ARCHIVE = int(config.ARCHIVE.get_secret_value())
 
 
 @dp.message(Command("start"))
@@ -71,7 +73,7 @@ async def change_label(message: types.Message):
             await update_message_by_id(message.reply_to_message.message_id, label)
             await bot.forward_message(ARCHIVE, message.chat.id, message.reply_to_message.message_id,
                                       message_thread_id=SUB_CHATS[label])
-            await message.react([react_label])
+            await message.react([REACTIONS['label']])
         else:
             await bot.send_message(ORIGIN, "Нет такого лейбла")
     else:
@@ -82,9 +84,9 @@ async def change_label(message: types.Message):
 async def change_label_info(message: types.Message):
     await bot.send_message(ORIGIN, """
     С помощью команды label можно сменить размеченный лейбл у сообщения. 
-    Для этого отправьте команду и новый лейбл через пробел.
-    В данный момент можно указать для сообщения следующие лейблы:
-    memes, files, vacancies, papers, courses, other
+Для этого отправьте команду и новый лейбл через пробел.
+В данный момент можно указать для сообщения следующие лейблы:
+memes, files, vacancies, papers, courses, other
     """)
 
 
@@ -104,7 +106,7 @@ async def files(message: types.Message):
     if ext_count == 0:
 
         await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS['files'],
-                              db_label='files', reaction=react_files)
+                              db_label='files', reaction=REACTIONS['files'])
 
 
 # forwards memes from the specified groups
@@ -112,7 +114,7 @@ async def files(message: types.Message):
                                                                    -1001009232144, -1001399874898})))
 async def memes(message: types.Message):
     await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS['memes'],
-                          db_label='memes', reaction=react_memes)
+                          db_label='memes', reaction=REACTIONS['memes'])
 
 
 # forwards vacancies with at least 3 keywords
@@ -128,7 +130,7 @@ async def vacancies(message: types.Message):
         
     if words_found_count >= 3:
         await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS['vacancies'],
-                              db_label='vacancies', reaction=react_vacancies)
+                              db_label='vacancies', reaction=REACTIONS['vacancies'])
 
 
 # forwards articles and courses
@@ -144,11 +146,11 @@ async def papers(message: types.Message):
     if data["url"] is not None and "курс" not in str.lower(message.text):
 
         await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS['papers'],
-                              db_label='papers', reaction=react_papers)
+                              db_label='papers', reaction=REACTIONS['papers'])
 
     elif data["url"] is not None and "курс" in str.lower(message.text):
         await log_and_forward(bot, message, target_chat=ARCHIVE, chat_label=SUB_CHATS['courses'],
-                              db_label='courses', reaction=react_courses)
+                              db_label='courses', reaction=REACTIONS['courses'])
 
     else:
         await log_entry(message, 'other')

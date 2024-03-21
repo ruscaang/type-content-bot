@@ -63,7 +63,7 @@ async def prepare_message(message: types.Message) -> Dict:
 async def log_and_forward(bot: Any, message: types.Message, target_chat: int,
                           chat_label: int, db_label: str, reaction: Any) -> None:
     """
-    Utility function to forward message, log message in db and send reaction,
+    Utility function to forward message, log message in db and send a reaction.
     :param bot: Bot dispatcher instance
     :param message: Message type of aiogram
     :param target_chat: Int address of chat to forward message to
