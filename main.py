@@ -6,7 +6,7 @@ from aiogram.filters.command import Command
 from config_reader import config
 from aiogram import F
 
-from utils import log_entry, check_db_exists
+from utils import log_entry, check_db_exists, log_and_forward
 from database.db_commands import fetch_data_by_user_id, update_message_by_id
 
 
@@ -14,20 +14,25 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=config.BOT_TOKEN.get_secret_value())
 dp = Dispatcher()
 
-react_vacancies = types.ReactionTypeEmoji(emoji="🕊")
-react_memes = types.ReactionTypeEmoji(emoji="🤡")
-react_files = types.ReactionTypeEmoji(emoji="🍓")
-react_papers = types.ReactionTypeEmoji(emoji="🏆")
-react_courses = types.ReactionTypeEmoji(emoji="⚡")
-react_label = types.ReactionTypeEmoji(emoji="✍")
+REACTIONS = {
+    'vacancies': types.ReactionTypeEmoji(emoji="🕊"),
+    "memes": types.ReactionTypeEmoji(emoji="🤡"),
+    "files": types.ReactionTypeEmoji(emoji="🍓"),
+    "papers": types.ReactionTypeEmoji(emoji="🏆"),
+    "courses": types.ReactionTypeEmoji(emoji="⚡"),
+    "label": types.ReactionTypeEmoji(emoji="✍"),
+}
+
+SUB_CHATS = {
+    'vacancies': int(config.VACANCIES.get_secret_value()),
+    'memes': int(config.MEMES.get_secret_value()),
+    'files': int(config.FILES.get_secret_value()),
+    'papers': int(config.PAPERS.get_secret_value()),
+    'courses': int(config.COURSES.get_secret_value())
+    }
 
 ORIGIN = int(config.ORIGIN.get_secret_value())
 ARCHIVE = int(config.ARCHIVE.get_secret_value())
-VACANCIES = int(config.VACANCIES.get_secret_value())
-MEMES = int(config.MEMES.get_secret_value())
-FILES = int(config.FILES.get_secret_value())
-PAPERS = int(config.PAPERS.get_secret_value())
-COURSES = int(config.COURSES.get_secret_value())
 
 
 @dp.message(Command("start"))
@@ -62,11 +67,16 @@ async def change_label(message: types.Message):
     labels = ["memes", "vacancies", "files", "courses", "papers", "other"]
     if len(message.text.split(' ')) > 1:
         label = message.text.split(' ')[1]
-        if message.reply_to_message is not None and label in labels:
+        if message.reply_to_message is None:
+            await bot.send_message(ORIGIN, "Нет реплая на сообщение")
+        elif label in labels:
             await update_message_by_id(message.reply_to_message.message_id, label)
-            await message.react([react_label])
+            await bot.forward_message(ARCHIVE, message.chat.id, message.reply_to_message.message_id,
+                                      message_thread_id=SUB_CHATS[label])
+            await message.react([REACTIONS['label']])
+            await message.reply_to_message.react([REACTIONS[label]])
         else:
-            await bot.send_message(ORIGIN, "Нет такого лейбла или нет реплая на сообщение")
+            await bot.send_message(ORIGIN, "Нет такого лейбла")
     else:
         await bot.send_message(ORIGIN, "Не передан новый лейбл")
 
@@ -77,8 +87,8 @@ async def change_label_info(message: types.Message):
     С помощью команды label можно сменить размеченный лейбл у сообщения. 
 Для этого отправьте команду и новый лейбл через пробел.
 В данный момент можно указать для сообщения следующие лейблы:
-memes, files, vacancies, papers, courses, other
-    """)
+🤡memes, 🍓files, 🕊vacancies, 🏆papers, ⚡courses, other
+""")
 
 
 # @dp.message(F.chat.id == ORIGIN) # function to see what is coming in the message
@@ -90,29 +100,28 @@ memes, files, vacancies, papers, courses, other
 @dp.message((F.chat.id == ORIGIN) & (F.document))
 async def files(message: types.Message):
     ext_count = 0
-    ext_list = ["gif", "mp3", "mp4", "png", "jpg", "jpeg", "txt", "json"]
-    for ext in ext_list:
+    ignore_list = ["gif", "mp3", "mp4", "png", "jpg", "jpeg", "txt", "json"]
+    for ext in ignore_list:
         if ext in message.document.file_name:
             ext_count += 1
     if ext_count == 0:
-        await message.react([react_files])
-        await bot.send_message(ARCHIVE, message.from_user.username, message_thread_id=FILES)
-        await bot.send_document(ARCHIVE, document=message.document.file_id, message_thread_id=FILES)
-        await log_entry(message, 'files')
+        label_name = 'files'
+        await log_and_forward(bot, message, target_chat=ARCHIVE, label_name=label_name,
+                              sub_chats=SUB_CHATS, reactions=REACTIONS)
 
 
 # forwards memes from the specified groups
 @dp.message((F.chat.id == ORIGIN) & (F.forward_origin.chat.id.in_({-1001595506698, -1001081170974,
                                                                    -1001009232144, -1001399874898})))
 async def memes(message: types.Message):
-    await message.react([react_memes])
-    await bot.forward_message(ARCHIVE, message.chat.id, message.message_id, message_thread_id=MEMES)
-    await log_entry(message, 'memes')
+    label_name = 'memes'
+    await log_and_forward(bot, message, target_chat=ARCHIVE, label_name=label_name,
+                          sub_chats=SUB_CHATS, reactions=REACTIONS)
 
 
 # forwards vacancies with at least 3 keywords
 @dp.message((F.chat.id == ORIGIN) & (F.forward_origin))
-async def vacansies(message: types.Message):
+async def vacancies(message: types.Message):
     words_list = ["ищем", "вакансия", "junior", "middle", "senior", "компания", "зарплата", "задач", "python", 
                   "sql", "data", "аналитик", "ab", "a/b", "ml", "инженер"]
     words_found_count = 0
@@ -122,9 +131,9 @@ async def vacansies(message: types.Message):
             words_found_count += 1
         
     if words_found_count >= 3:
-        await message.react([react_vacancies])
-        await bot.forward_message(ARCHIVE, message.chat.id, message.message_id, message_thread_id=VACANCIES)
-        await log_entry(message, 'vacancies')
+        label_name = 'vacancies'
+        await log_and_forward(bot, message, target_chat=ARCHIVE, label_name=label_name,
+                              sub_chats=SUB_CHATS, reactions=REACTIONS)
 
 
 # forwards articles and courses
@@ -138,13 +147,15 @@ async def papers(message: types.Message):
         if item.type in data.keys():
             data[item.type] = item.extract_from(message.text)
     if data["url"] is not None and "курс" not in str.lower(message.text):
-        await message.react([react_papers])
-        await bot.send_message(ARCHIVE, message.from_user.username + ": " + data["url"], message_thread_id=PAPERS)
-        await log_entry(message, 'papers')
+        label_name = 'papers'
+        await log_and_forward(bot, message, target_chat=ARCHIVE, label_name=label_name,
+                              sub_chats=SUB_CHATS, reactions=REACTIONS)
+
     elif data["url"] is not None and "курс" in str.lower(message.text):
-        await message.react([react_courses])
-        await bot.send_message(ARCHIVE, message.from_user.username + "\n" + message.text, message_thread_id=COURSES)
-        await log_entry(message, 'courses')
+        label_name = 'courses'
+        await log_and_forward(bot, message, target_chat=ARCHIVE, label_name=label_name,
+                              sub_chats=SUB_CHATS, reactions=REACTIONS)
+
     else:
         await log_entry(message, 'other')
        
