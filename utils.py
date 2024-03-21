@@ -58,3 +58,21 @@ async def prepare_message(message: types.Message) -> Dict:
                     'json_data':  j_data,
                     'get_error': get_error}
     return message_dict
+
+
+async def log_and_forward(bot: Any, message: types.Message, target_chat: int,
+                          chat_label: int, db_label: str, reaction: Any) -> None:
+    """
+    Utility function to forward message, log message in db and send reaction,
+    :param bot: Bot dispatcher instance
+    :param message: Message type of aiogram
+    :param target_chat: Int address of chat to forward message to
+    :param db_label: String to write into db as a label
+    :param chat_label: Ind address of subtopic in target chat
+    :param reaction: An emoji to react to the message
+    :return:
+    """
+    await bot.forward_message(chat_id=target_chat, from_chat_id=message.chat.id,
+                              message_id=message.message_id, message_thread_id=chat_label)
+    await log_entry(message, db_label)
+    await message.react([reaction])
