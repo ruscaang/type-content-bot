@@ -95,14 +95,14 @@ memes, files, vacancies, papers, courses, other
 @dp.message((F.chat.id == ORIGIN) & (F.document))
 async def files(message: types.Message):
     ext_count = 0
-    ext_list = ["gif", "mp3", "mp4", "png", "jpg", "jpeg", "txt", "json"]
-    for ext in ext_list:
+    ignore_list = ["gif", "mp3", "mp4", "png", "jpg", "jpeg", "txt", "json"]
+    for ext in ignore_list:
         if ext in message.document.file_name:
             ext_count += 1
     if ext_count == 0:
         await message.react([react_files])
-        await bot.send_message(ARCHIVE, message.from_user.username, message_thread_id=SUB_CHATS['files'])
-        await bot.send_document(ARCHIVE, document=message.document.file_id, message_thread_id=SUB_CHATS['files'])
+        await bot.forward_message(chat_id=ARCHIVE, from_chat_id=message.chat.id, message_id=message.message_id,
+                                  message_thread_id=SUB_CHATS['files'])
         await log_entry(message, 'files')
 
 
@@ -145,16 +145,14 @@ async def papers(message: types.Message):
             data[item.type] = item.extract_from(message.text)
     if data["url"] is not None and "курс" not in str.lower(message.text):
         await message.react([react_papers])
-        await bot.send_message(ARCHIVE, message.from_user.username + ": " + data["url"],
-                               message_thread_id=SUB_CHATS['papers'])
+        await bot.forward_message(chat_id=ARCHIVE, from_chat_id=message.chat.id, message_id=message.message_id,
+                                  message_thread_id=SUB_CHATS['papers'])
         await log_entry(message, 'papers')
 
     elif data["url"] is not None and "курс" in str.lower(message.text):
         await message.react([react_courses])
-        await bot.send_message(ARCHIVE, message.from_user.username + "\n" + message.text,
-                               message_thread_id=SUB_CHATS['courses'])
-        await log_entry(message, 'courses')
-
+        await bot.forward_message(chat_id=ARCHIVE, from_chat_id=message.chat.id, message_id=message.message_id,
+                                  message_thread_id=SUB_CHATS['courses'])
     else:
         await log_entry(message, 'other')
        
