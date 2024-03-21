@@ -67,6 +67,8 @@ async def change_label(message: types.Message):
         label = message.text.split(' ')[1]
         if message.reply_to_message is not None and label in labels:
             await update_message_by_id(message.reply_to_message.message_id, label)
+            await bot.forward_message(ARCHIVE, message.chat.id, message.reply_to_message.message_id,
+                                      message_thread_id=SUB_CHATS[label])
             await message.react([react_label])
         else:
             await bot.send_message(ORIGIN, "Нет такого лейбла или нет реплая на сообщение")
@@ -115,7 +117,7 @@ async def memes(message: types.Message):
 
 # forwards vacancies with at least 3 keywords
 @dp.message((F.chat.id == ORIGIN) & (F.forward_origin))
-async def vacansies(message: types.Message):
+async def vacancies(message: types.Message):
     words_list = ["ищем", "вакансия", "junior", "middle", "senior", "компания", "зарплата", "задач", "python", 
                   "sql", "data", "аналитик", "ab", "a/b", "ml", "инженер"]
     words_found_count = 0
